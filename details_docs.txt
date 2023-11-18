@@ -1,0 +1,12 @@
+location - address of the apartment
+total_price - total price of the apartment in PLN
+price_per_sqm - price per square meter in PLN
+area - area of the apartment in m^2
+rooms - number of rooms
+finished - condition of the apartment, is it finished, ready to live ecoinstalacje
+floor - on which floor is the apartment
+outside - is there a garden/terrace or balcony
+rent - how much is rent per month
+elevator - is there a working elevator
+built - year the building was built
+b_type - type of building
