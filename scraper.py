@@ -71,7 +71,7 @@ while idx<len(OFFERS):
         finished = soup.find('div', {'class': 'css-kkaknb enb64yk1', 'aria-label': 'Stan wykończenia', 'role': 'region'}).text.strip()[16:]
         floor = soup.find('div', {'class': 'css-1wi2w6s enb64yk5', 'data-testid': 'table-value-floor'}).text.strip()
         outside = soup.find('div', {'class':'css-1wi2w6s enb64yk5', 'data-testid': 'table-value-outdoor'}).text.strip()
-        
+        #xddd
     # save last index checked
     idx += 1
     lc = open('last_checked.txt', 'w')
