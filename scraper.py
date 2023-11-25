@@ -52,26 +52,38 @@ if empty:
 with open('last_checked.txt') as lc:
     idx = int(lc.readline().strip())
 
+def exist(typ, _class):
+    it = soup.find(typ, _class)
+    if it is not None: return True
+    return False
+
 while idx<len(OFFERS):
-    ref = OFFERS[idx].strip()
-    detailed = session.get(f'{ROOT}{ref}', headers=HEADERS, proxies={'http': random.choice(PROXIES)})
-    print(f'{ROOT}{ref}')
-    if detailed.status_code!=200:
-        print(detailed.status_code)
-        print(f'Failed to load page {idx}')
-    else:
-        print(idx)
-        # sprawdzanie czy wartosc istnieje
-        soup = bs(detailed.content, 'html.parser')
-        location = soup.find('a', class_='e1w8sadu0 css-1helwne exgq9l20').text.strip()
-        total_price = soup.find('strong', class_='css-t3wmkv e1l1avn10').text.strip()
-        price_per_sqm = soup.find('div', class_='css-1h1l5lm efcnut39').text.strip()
-        area = soup.find('div', class_='css-1wi2w6s enb64yk5').text.strip()
-        rooms = soup.find('div', {'class': 'css-1wi2w6s', 'data-testid': 'table-value-rooms_num'}).text.strip()
-        finished = soup.find('div', {'class': 'css-kkaknb enb64yk1', 'aria-label': 'Stan wykończenia', 'role': 'region'}).text.strip()[16:]
-        floor = soup.find('div', {'class': 'css-1wi2w6s enb64yk5', 'data-testid': 'table-value-floor'}).text.strip()
-        outside = soup.find('div', {'class':'css-1wi2w6s enb64yk5', 'data-testid': 'table-value-outdoor'}).text.strip()
-        #xddd
+    with open('details.txt', 'a+') as dets:
+        ref = OFFERS[idx].strip()
+        detailed = session.get(f'{ROOT}{ref}', headers=HEADERS, proxies={'http': random.choice(PROXIES)})
+        print(f'{ROOT}{ref}')
+        if detailed.status_code!=200:
+            print(detailed.status_code)
+            print(f'Failed to load page {idx}')
+        else:
+            print(idx)
+            # sprawdzanie czy wartosc istnieje
+            soup = bs(detailed.content, 'html.parser')
+            location = soup.find('a', {'class':'e1w8sadu0 css-1helwne exgq9l20'}).text.strip() if exist('a', {'class':'e1w8sadu0 css-1helwne exgq9l20'}) else ''
+            total_price = soup.find('strong', {'class': 'css-t3wmkv e1l1avn10'}).text.strip() if exist('strong', {'class': 'css-t3wmkv e1l1avn10'}) else ''
+            price_per_sqm = soup.find('div', {'class':'css-1h1l5lm efcnut39'}).text.strip() if exist('div', {'class':'css-1h1l5lm efcnut39'}) else ''
+            area = soup.find('div', {'class':'css-1wi2w6s enb64yk5'}).text.strip() if exist('div', {'class':'css-1wi2w6s enb64yk5'}) else ''
+            rooms = soup.find('div', {'class': 'css-1wi2w6s', 'data-testid': 'table-value-rooms_num'}).text.strip() if exist('div', {'class': 'css-1wi2w6s', 'data-testid': 'table-value-rooms_num'}) else ''
+            finished = soup.find('div', {'class': 'css-kkaknb enb64yk1', 'aria-label': 'Stan wykończenia', 'role': 'region'}).text.strip()[16:] if exist('div', {'class': 'css-kkaknb enb64yk1', 'aria-label': 'Stan wykończenia', 'role': 'region'}) else ''
+            floor = soup.find('div', {'class': 'css-1wi2w6s enb64yk5', 'data-testid': 'table-value-floor'}).text.strip() if exist('div', {'class': 'css-1wi2w6s enb64yk5', 'data-testid': 'table-value-floor'}) else ''
+            outside = soup.find('div', {'class':'css-1wi2w6s enb64yk5', 'data-testid': 'table-value-outdoor'}).text.strip() if exist('div', {'class':'css-1wi2w6s enb64yk5', 'data-testid': 'table-value-outdoor'}) else ''
+            rent = soup.find('div', {'data-testid':'table-value-rent', 'class': 'css-1wi2w6s enb64yk5'}).text.strip() if exist('div', {'data-testid':'table-value-rent', 'class': 'css-1wi2w6s enb64yk5'}) else ''
+            elevator = soup.find('div', {'data-testid':'table-value-lift', 'class': 'css-1wi2w6s enb64yk5'}).text.strip() if exist('div', {'data-testid':'table-value-lift', 'class': 'css-1wi2w6s enb64yk5'}) else ''
+            built = soup.find('div', {'data-testid':'table-value-build_year', 'class': 'css-1wi2w6s enb64yk5'}).text.strip() if exist('div', {'data-testid':'table-value-build_year', 'class': 'css-1wi2w6s enb64yk5'}) else ''
+            b_type = soup.find('div', {'data-testid':'table-value-building_type', 'class': 'css-1wi2w6s enb64yk5'}).text.strip() if exist('div', {'data-testid':'table-value-building_type', 'class': 'css-1wi2w6s enb64yk5'}) else ''
+            row = f'{location};{total_price};{price_per_sqm};{area};{rooms};{finished};{floor};{outside};{rent};{elevator};{built};{b_type}'
+            print(row, file=dets)
+        
     # save last index checked
     idx += 1
     lc = open('last_checked.txt', 'w')
