@@ -10,3 +10,4 @@ rent - how much is rent per month
 elevator - is there a working elevator
 built - year the building was built
 b_type - type of building
+link - link to the auction

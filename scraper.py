@@ -67,7 +67,8 @@ while idx<len(OFFERS):
             print(f'Failed to load page {idx}')
         else:
             print(idx)
-            # sprawdzanie czy wartosc istnieje
+            # get detailed data about listing
+            # checking if values exist is crucial so the code wont crash
             soup = bs(detailed.content, 'html.parser')
             location = soup.find('a', {'class':'e1w8sadu0 css-1helwne exgq9l20'}).text.strip() if exist('a', {'class':'e1w8sadu0 css-1helwne exgq9l20'}) else ''
             total_price = soup.find('strong', {'class': 'css-t3wmkv e1l1avn10'}).text.strip() if exist('strong', {'class': 'css-t3wmkv e1l1avn10'}) else ''
@@ -81,7 +82,7 @@ while idx<len(OFFERS):
             elevator = soup.find('div', {'data-testid':'table-value-lift', 'class': 'css-1wi2w6s enb64yk5'}).text.strip() if exist('div', {'data-testid':'table-value-lift', 'class': 'css-1wi2w6s enb64yk5'}) else ''
             built = soup.find('div', {'data-testid':'table-value-build_year', 'class': 'css-1wi2w6s enb64yk5'}).text.strip() if exist('div', {'data-testid':'table-value-build_year', 'class': 'css-1wi2w6s enb64yk5'}) else ''
             b_type = soup.find('div', {'data-testid':'table-value-building_type', 'class': 'css-1wi2w6s enb64yk5'}).text.strip() if exist('div', {'data-testid':'table-value-building_type', 'class': 'css-1wi2w6s enb64yk5'}) else ''
-            row = f'{location};{total_price};{price_per_sqm};{area};{rooms};{finished};{floor};{outside};{rent};{elevator};{built};{b_type}'
+            row = f'{location};{total_price};{price_per_sqm};{area};{rooms};{finished};{floor};{outside};{rent};{elevator};{built};{b_type};{ROOT}{ref}'
             print(row, file=dets)
         
     # save last index checked
