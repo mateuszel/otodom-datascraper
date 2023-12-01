@@ -1,6 +1,4 @@
 import requests
-import json
-import os
 from time import *
 import random
 from bs4 import BeautifulSoup as bs
@@ -21,73 +19,88 @@ HEADERS = {
 
 PROXIES = ["50.200.12.82:80", "50.170.90.24:80", "157.245.97.60:80", "80.13.43.193:80", "207.180.249.153:3128", "173.212.250.16:37712", "185.162.229.215:80"]
 
-# get all listings and gather links to details of each listing
-session = requests.Session()
-OFFERS = []
-with open('offers.txt', 'r') as ofs:
-    if os.path.getsize('offers.txt')!=0:
-        empty = False
-        for row in ofs:
-            OFFERS.append(row)
-    else:
-        empty = True
-if empty:
-    with open('offers.txt', 'w') as ofs:
-        for i in range(1, 301): # get 300 pages
-            listings = session.get(f'{URL}&page={i}', headers=HEADERS, proxies={"http": random.choice(PROXIES)})
-            if listings.status_code==200:
-                soup = bs(listings.text, 'html.parser')
-                print(i)
-                links = soup.find_all('a', class_='css-1hfdwlm e1dfeild2')
-                hrefs = [link.get('href') for link in links]
-                for r in hrefs:
-                    print(r, file=ofs)
-                    OFFERS.append(r)
-            else:
-                print(f'Failed to get page {i}')
-            sleep(random.uniform(1,3))
-
-# visit all offers and grab detailed data
-# since it can be a long process remember index of link that was visited last
-with open('last_checked.txt') as lc:
-    idx = int(lc.readline().strip())
-
-def exist(typ, _class):
+def exist(typ, _class, soup): # used to check if an element exists
     it = soup.find(typ, _class)
     if it is not None: return True
     return False
 
-while idx<len(OFFERS):
-    with open('details.txt', 'a+') as dets:
+def load_old_offers(file):
+    # used to load offers that already exist in db, so we have as little duplicates as possible
+    offers = set() # use set because of time complexity
+    with open(file, 'r') as f:
+        for r in f:
+            offers.add(r)
+    return offers
+
+def get_new_offers(session, start_page, last_page, old_offers):
+    # load new offers, check if they already exist in file using set 
+    # save new offers into the file
+    # return "OFFERS" which contains only newly added offers a
+    # print the number of all new listings that were added
+    
+    OFFERS = []
+    with open('offers.txt', 'a+') as ofs:
+        for i in range(start_page, last_page+1):
+            listings = session.get(f'{URL}&page={i}', headers=HEADERS, proxies={"http": random.choice(PROXIES)})
+            if listings.status_code==200:
+                print(f'Page {i} loaded successfully.')
+                soup = bs(listings.text, 'html.parser')
+                links = soup.find_all('a',  {'data-cy':'listing-item-link'}) # find by class didnt work for some reason
+                hrefs = [link.get('href') for link in links]
+                for r in hrefs:
+                    if r not in old_offers:
+                        print(r, file=ofs)
+                        old_offers.add(r)
+                        OFFERS.append(r)
+            else:
+                print(f'Failed to load page {i}. Error code: {listings.status_code}')
+            sleep(random.uniform(0.75, 1.6))
+
+    print(f"Loading new offers finished successfully. There's {len(OFFERS)} new offers.")
+    return OFFERS
+
+def get_details(OFFERS, session, output_file):
+    # for each href in OFFERS fetch details and save in output_file
+    # save idx in last_checked.txt to avoid fetching the same offer more than once
+    with open('last_checked.txt', 'r') as lc:
+        idx = int(lc.readline().strip())
+
+    OFFERS = list(OFFERS)
+    while idx<len(OFFERS):
         ref = OFFERS[idx].strip()
         detailed = session.get(f'{ROOT}{ref}', headers=HEADERS, proxies={'http': random.choice(PROXIES)})
-        print(f'{ROOT}{ref}')
         if detailed.status_code!=200:
-            print(detailed.status_code)
-            print(f'Failed to load page {idx}')
+            print(f'Failed to load page {ROOT}{ref}. Error code: {detailed.status_code}')
         else:
-            print(idx)
+            print(f'{idx}/{len(OFFERS)}')
             # get detailed data about listing
             # checking if values exist is crucial so the code wont crash
             soup = bs(detailed.content, 'html.parser')
-            location = soup.find('a', {'class':'e1w8sadu0 css-1helwne exgq9l20'}).text.strip() if exist('a', {'class':'e1w8sadu0 css-1helwne exgq9l20'}) else ''
-            total_price = soup.find('strong', {'class': 'css-t3wmkv e1l1avn10'}).text.strip() if exist('strong', {'class': 'css-t3wmkv e1l1avn10'}) else ''
-            price_per_sqm = soup.find('div', {'class':'css-1h1l5lm efcnut39'}).text.strip() if exist('div', {'class':'css-1h1l5lm efcnut39'}) else ''
-            area = soup.find('div', {'class':'css-1wi2w6s enb64yk5'}).text.strip() if exist('div', {'class':'css-1wi2w6s enb64yk5'}) else ''
-            rooms = soup.find('div', {'class': 'css-1wi2w6s', 'data-testid': 'table-value-rooms_num'}).text.strip() if exist('div', {'class': 'css-1wi2w6s', 'data-testid': 'table-value-rooms_num'}) else ''
-            finished = soup.find('div', {'class': 'css-kkaknb enb64yk1', 'aria-label': 'Stan wykończenia', 'role': 'region'}).text.strip()[16:] if exist('div', {'class': 'css-kkaknb enb64yk1', 'aria-label': 'Stan wykończenia', 'role': 'region'}) else ''
-            floor = soup.find('div', {'class': 'css-1wi2w6s enb64yk5', 'data-testid': 'table-value-floor'}).text.strip() if exist('div', {'class': 'css-1wi2w6s enb64yk5', 'data-testid': 'table-value-floor'}) else ''
-            outside = soup.find('div', {'class':'css-1wi2w6s enb64yk5', 'data-testid': 'table-value-outdoor'}).text.strip() if exist('div', {'class':'css-1wi2w6s enb64yk5', 'data-testid': 'table-value-outdoor'}) else ''
-            rent = soup.find('div', {'data-testid':'table-value-rent', 'class': 'css-1wi2w6s enb64yk5'}).text.strip() if exist('div', {'data-testid':'table-value-rent', 'class': 'css-1wi2w6s enb64yk5'}) else ''
-            elevator = soup.find('div', {'data-testid':'table-value-lift', 'class': 'css-1wi2w6s enb64yk5'}).text.strip() if exist('div', {'data-testid':'table-value-lift', 'class': 'css-1wi2w6s enb64yk5'}) else ''
-            built = soup.find('div', {'data-testid':'table-value-build_year', 'class': 'css-1wi2w6s enb64yk5'}).text.strip() if exist('div', {'data-testid':'table-value-build_year', 'class': 'css-1wi2w6s enb64yk5'}) else ''
-            b_type = soup.find('div', {'data-testid':'table-value-building_type', 'class': 'css-1wi2w6s enb64yk5'}).text.strip() if exist('div', {'data-testid':'table-value-building_type', 'class': 'css-1wi2w6s enb64yk5'}) else ''
+            location = soup.find('a', {'class':'e1w8sadu0 css-1helwne exgq9l20'}).text.strip() if exist('a', {'class':'e1w8sadu0 css-1helwne exgq9l20'}, soup) else ''
+            total_price = soup.find('strong', {'class': 'css-t3wmkv e1l1avn10'}).text.strip() if exist('strong', {'class': 'css-t3wmkv e1l1avn10'}, soup) else ''
+            price_per_sqm = soup.find('div', {'class':'css-1h1l5lm efcnut39'}).text.strip() if exist('div', {'class':'css-1h1l5lm efcnut39'}, soup) else ''
+            area = soup.find('div', {'class':'css-1wi2w6s enb64yk5'}).text.strip() if exist('div', {'class':'css-1wi2w6s enb64yk5'}, soup) else ''
+            rooms = soup.find('div', {'class': 'css-1wi2w6s', 'data-testid': 'table-value-rooms_num'}).text.strip() if exist('div', {'class': 'css-1wi2w6s', 'data-testid': 'table-value-rooms_num'}, soup) else ''
+            finished = soup.find('div', {'class': 'css-kkaknb enb64yk1', 'aria-label': 'Stan wykończenia', 'role': 'region'}).text.strip()[16:] if exist('div', {'class': 'css-kkaknb enb64yk1', 'aria-label': 'Stan wykończenia', 'role': 'region'}, soup) else ''
+            floor = soup.find('div', {'class': 'css-1wi2w6s enb64yk5', 'data-testid': 'table-value-floor'}).text.strip() if exist('div', {'class': 'css-1wi2w6s enb64yk5', 'data-testid': 'table-value-floor'}, soup) else ''
+            outside = soup.find('div', {'class':'css-1wi2w6s enb64yk5', 'data-testid': 'table-value-outdoor'}).text.strip() if exist('div', {'class':'css-1wi2w6s enb64yk5', 'data-testid': 'table-value-outdoor'}, soup) else ''
+            rent = soup.find('div', {'data-testid':'table-value-rent', 'class': 'css-1wi2w6s enb64yk5'}).text.strip() if exist('div', {'data-testid':'table-value-rent', 'class': 'css-1wi2w6s enb64yk5'}, soup) else ''
+            elevator = soup.find('div', {'data-testid':'table-value-lift', 'class': 'css-1wi2w6s enb64yk5'}).text.strip() if exist('div', {'data-testid':'table-value-lift', 'class': 'css-1wi2w6s enb64yk5'}, soup) else ''
+            built = soup.find('div', {'data-testid':'table-value-build_year', 'class': 'css-1wi2w6s enb64yk5'}).text.strip() if exist('div', {'data-testid':'table-value-build_year', 'class': 'css-1wi2w6s enb64yk5'}, soup) else ''
+            b_type = soup.find('div', {'data-testid':'table-value-building_type', 'class': 'css-1wi2w6s enb64yk5'}).text.strip() if exist('div', {'data-testid':'table-value-building_type', 'class': 'css-1wi2w6s enb64yk5'}, soup) else ''
             row = f'{location};{total_price};{price_per_sqm};{area};{rooms};{finished};{floor};{outside};{rent};{elevator};{built};{b_type};{ROOT}{ref}'
-            print(row, file=dets)
-        
-    # save last index checked
-    idx += 1
-    lc = open('last_checked.txt', 'w')
-    print(idx, file=lc)
-    lc.close()
-    sleep(random.uniform(1, 3))
+            with open(output_file, 'a+') as dets:
+                print(row, file=dets)
+        idx += 1
+        with open('last_checked.txt', 'w') as lc:
+            print(idx, file=lc)
+        sleep(random.uniform(0.5, 1.25))
+    print('Process finished successfully.')
+
+def main():
+    session = requests.Session()
+    old = load_old_offers('offers.txt')
+    OFFERS = get_new_offers(session, 51, 80, old)
+    get_details(OFFERS, session, 'details.txt')
+
+main()
