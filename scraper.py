@@ -63,7 +63,11 @@ def get_details(OFFERS, session, output_file):
     # for each href in OFFERS fetch details and save in output_file
     # save idx in last_checked.txt to avoid fetching the same offer more than once
     with open('last_checked.txt', 'r') as lc:
-        idx = int(lc.readline().strip())
+        idx = lc.readline().strip()
+        if idx=='':
+            idx = 0
+        else:
+            idx = int(idx)
 
     OFFERS = list(OFFERS)
     while idx<len(OFFERS):
@@ -95,12 +99,15 @@ def get_details(OFFERS, session, output_file):
         with open('last_checked.txt', 'w') as lc:
             print(idx, file=lc)
         sleep(random.uniform(0.5, 1.25))
+
     print('Process finished successfully.')
+    with open('last_checked.txt', 'w') as lc: # clear last_checked only after completing the task
+        print(0, file=lc)
 
 def main():
     session = requests.Session()
     old = load_old_offers('offers.txt')
-    OFFERS = get_new_offers(session, 51, 80, old)
+    OFFERS = get_new_offers(session, 151, 250, old)
     get_details(OFFERS, session, 'details.txt')
 
 main()
