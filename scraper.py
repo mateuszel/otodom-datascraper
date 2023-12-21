@@ -59,6 +59,27 @@ def get_new_offers(session, start_page, last_page, old_offers):
     print(f"Loading new offers finished successfully. There's {len(OFFERS)} new offers.")
     return OFFERS
 
+def __details(detailed, ref):
+    # get the neccessary data from webpage and return it as one row
+    # checking if values exist is crucial so the code wont crash
+
+    soup = bs(detailed.content, 'html.parser')
+    location = soup.find('a', {'class':'e1w8sadu0 css-1helwne exgq9l20'}).text.strip() if exist('a', {'class':'e1w8sadu0 css-1helwne exgq9l20'}, soup) else ''
+    total_price = soup.find('strong', {'class': 'css-t3wmkv e1l1avn10'}).text.strip() if exist('strong', {'class': 'css-t3wmkv e1l1avn10'}, soup) else ''
+    price_per_sqm = soup.find('div', {'class':'css-1h1l5lm efcnut39'}).text.strip() if exist('div', {'class':'css-1h1l5lm efcnut39'}, soup) else ''
+    area = soup.find('div', {'class':'css-1wi2w6s enb64yk5'}).text.strip() if exist('div', {'class':'css-1wi2w6s enb64yk5'}, soup) else ''
+    rooms = soup.find('div', {'class': 'css-1wi2w6s', 'data-testid': 'table-value-rooms_num'}).text.strip() if exist('div', {'class': 'css-1wi2w6s', 'data-testid': 'table-value-rooms_num'}, soup) else ''
+    finished = soup.find('div', {'class': 'css-kkaknb enb64yk1', 'aria-label': 'Stan wykończenia', 'role': 'region'}).text.strip()[16:] if exist('div', {'class': 'css-kkaknb enb64yk1', 'aria-label': 'Stan wykończenia', 'role': 'region'}, soup) else ''
+    floor = soup.find('div', {'class': 'css-1wi2w6s enb64yk5', 'data-testid': 'table-value-floor'}).text.strip() if exist('div', {'class': 'css-1wi2w6s enb64yk5', 'data-testid': 'table-value-floor'}, soup) else ''
+    outside = soup.find('div', {'class':'css-1wi2w6s enb64yk5', 'data-testid': 'table-value-outdoor'}).text.strip() if exist('div', {'class':'css-1wi2w6s enb64yk5', 'data-testid': 'table-value-outdoor'}, soup) else ''
+    rent = soup.find('div', {'data-testid':'table-value-rent', 'class': 'css-1wi2w6s enb64yk5'}).text.strip() if exist('div', {'data-testid':'table-value-rent', 'class': 'css-1wi2w6s enb64yk5'}, soup) else ''
+    elevator = soup.find('div', {'data-testid':'table-value-lift', 'class': 'css-1wi2w6s enb64yk5'}).text.strip() if exist('div', {'data-testid':'table-value-lift', 'class': 'css-1wi2w6s enb64yk5'}, soup) else ''
+    built = soup.find('div', {'data-testid':'table-value-build_year', 'class': 'css-1wi2w6s enb64yk5'}).text.strip() if exist('div', {'data-testid':'table-value-build_year', 'class': 'css-1wi2w6s enb64yk5'}, soup) else ''
+    b_type = soup.find('div', {'data-testid':'table-value-building_type', 'class': 'css-1wi2w6s enb64yk5'}).text.strip() if exist('div', {'data-testid':'table-value-building_type', 'class': 'css-1wi2w6s enb64yk5'}, soup) else ''
+    row = f'{location};{total_price};{price_per_sqm};{area};{rooms};{finished};{floor};{outside};{rent};{elevator};{built};{b_type};{ROOT}{ref}'
+
+    return row
+
 def get_details(OFFERS, session, output_file):
     # for each href in OFFERS fetch details and save in output_file
     # save idx in last_checked.txt to avoid fetching the same offer more than once
@@ -78,21 +99,8 @@ def get_details(OFFERS, session, output_file):
         else:
             print(f'{idx}/{len(OFFERS)}')
             # get detailed data about listing
-            # checking if values exist is crucial so the code wont crash
-            soup = bs(detailed.content, 'html.parser')
-            location = soup.find('a', {'class':'e1w8sadu0 css-1helwne exgq9l20'}).text.strip() if exist('a', {'class':'e1w8sadu0 css-1helwne exgq9l20'}, soup) else ''
-            total_price = soup.find('strong', {'class': 'css-t3wmkv e1l1avn10'}).text.strip() if exist('strong', {'class': 'css-t3wmkv e1l1avn10'}, soup) else ''
-            price_per_sqm = soup.find('div', {'class':'css-1h1l5lm efcnut39'}).text.strip() if exist('div', {'class':'css-1h1l5lm efcnut39'}, soup) else ''
-            area = soup.find('div', {'class':'css-1wi2w6s enb64yk5'}).text.strip() if exist('div', {'class':'css-1wi2w6s enb64yk5'}, soup) else ''
-            rooms = soup.find('div', {'class': 'css-1wi2w6s', 'data-testid': 'table-value-rooms_num'}).text.strip() if exist('div', {'class': 'css-1wi2w6s', 'data-testid': 'table-value-rooms_num'}, soup) else ''
-            finished = soup.find('div', {'class': 'css-kkaknb enb64yk1', 'aria-label': 'Stan wykończenia', 'role': 'region'}).text.strip()[16:] if exist('div', {'class': 'css-kkaknb enb64yk1', 'aria-label': 'Stan wykończenia', 'role': 'region'}, soup) else ''
-            floor = soup.find('div', {'class': 'css-1wi2w6s enb64yk5', 'data-testid': 'table-value-floor'}).text.strip() if exist('div', {'class': 'css-1wi2w6s enb64yk5', 'data-testid': 'table-value-floor'}, soup) else ''
-            outside = soup.find('div', {'class':'css-1wi2w6s enb64yk5', 'data-testid': 'table-value-outdoor'}).text.strip() if exist('div', {'class':'css-1wi2w6s enb64yk5', 'data-testid': 'table-value-outdoor'}, soup) else ''
-            rent = soup.find('div', {'data-testid':'table-value-rent', 'class': 'css-1wi2w6s enb64yk5'}).text.strip() if exist('div', {'data-testid':'table-value-rent', 'class': 'css-1wi2w6s enb64yk5'}, soup) else ''
-            elevator = soup.find('div', {'data-testid':'table-value-lift', 'class': 'css-1wi2w6s enb64yk5'}).text.strip() if exist('div', {'data-testid':'table-value-lift', 'class': 'css-1wi2w6s enb64yk5'}, soup) else ''
-            built = soup.find('div', {'data-testid':'table-value-build_year', 'class': 'css-1wi2w6s enb64yk5'}).text.strip() if exist('div', {'data-testid':'table-value-build_year', 'class': 'css-1wi2w6s enb64yk5'}, soup) else ''
-            b_type = soup.find('div', {'data-testid':'table-value-building_type', 'class': 'css-1wi2w6s enb64yk5'}).text.strip() if exist('div', {'data-testid':'table-value-building_type', 'class': 'css-1wi2w6s enb64yk5'}, soup) else ''
-            row = f'{location};{total_price};{price_per_sqm};{area};{rooms};{finished};{floor};{outside};{rent};{elevator};{built};{b_type};{ROOT}{ref}'
+            row = __details(detailed, ref)
+
             with open(output_file, 'a+') as dets:
                 print(row, file=dets)
         idx += 1
@@ -107,7 +115,8 @@ def get_details(OFFERS, session, output_file):
 def main():
     session = requests.Session()
     old = load_old_offers('offers.txt')
-    OFFERS = get_new_offers(session, 151, 250, old)
+    OFFERS = get_new_offers(session, 201, 251, old)
     get_details(OFFERS, session, 'details.txt')
 
-main()
+if __name__=='__main__':
+    main()
