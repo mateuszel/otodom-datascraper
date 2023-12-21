@@ -113,9 +113,10 @@ def get_details(OFFERS, session, output_file):
         print(0, file=lc)
 
 def main():
+    first, last = input("Input number of the first page and last page you want to download.\n").split()
     session = requests.Session()
     old = load_old_offers('offers.txt')
-    OFFERS = get_new_offers(session, 201, 251, old)
+    OFFERS = get_new_offers(session, int(first), int(last), old)
     get_details(OFFERS, session, 'details.txt')
 
 if __name__=='__main__':
