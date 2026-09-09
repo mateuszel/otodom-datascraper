@@ -1,18 +1,40 @@
+# Otodom Data Scraper
 
-### A simple and efficient data scraper for Otodom.pl website. It allows to easily get information about thousands of apartments listings in Warsaw. The code is working and has been tested.
+Python scraper developed to collect Warsaw apartment listings for the
+[Warsaw Apartment Price Prediction](https://github.com/mateuszel/warsaw-apartment-price-prediction)
+project.
 
-## Short documentation
-`load_old_offers(file)`  
-Function takes path to a text file as an argument and returns a set of all rows in that file. It's used to avoid duplicates in database.  
+The scraper collects listing URLs, avoids duplicates between runs and supports
+resuming detailed-data collection after an interruption.
 
-`get_new_offers(session, start_page, last_page, old_offers)`  
-Function takes as arguments a Requests session and a range of pages user wants to search through. It also takes a set of strings, which contains all listings that already exist in database. Returns a list of new listings' URL's.  
+> This project was developed against the Otodom website structure available at
+> the time of development. Changes to the website may require updates to the
+> parser.
 
-`__details(detailed, ref)`
-Function returns the detailed data as a string. 
+## Features
 
-`get_details(OFFERS, session, output_file)`  
-Function takes a list of URL's, a Requests session and path to a text file as arguments. It fetches detailed from URL's contained in `OFFERS` and saves them in `output_file`. Since getting the detailed data about listings can cost a lot of time, the function saves index of the most recently checked listing, so it's possible to interrupt and then resume the process.  
+- Load previously collected listings to avoid duplicates
+- Collect new listing URLs from selected pages
+- Retrieve detailed information for each listing
+- Save progress and resume interrupted collection
 
-Specific info about the scraped data itself can be found in `details_docs.txt`.  
+## Main functions
 
+### `load_old_offers(file)`
+
+Loads previously collected listing identifiers from a text file and returns
+them as a set.
+
+### `get_new_offers(session, start_page, last_page, old_offers)`
+
+Collects new listing URLs from the selected page range while excluding listings
+already present in `old_offers`.
+
+### `get_details(offers, session, output_file)`
+
+Retrieves detailed information for the selected listings and saves the results
+to `output_file`. The function stores progress so that collection can be
+resumed after interruption.
+
+Additional information about the output format is available in
+[`details_docs.txt`](details_docs.txt).
